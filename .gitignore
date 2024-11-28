@@ -172,3 +172,7 @@ terraform.output.*.json
 .mage_data/
 __pycache__/
 .DS_Store
+
+# SSH 
+.ssh/
+.sshtunnel/
