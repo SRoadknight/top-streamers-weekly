@@ -10,26 +10,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set the working directory
 WORKDIR /app
 
-# Copy the entire project first (including your existing Mage structure)
-COPY . .
+# Copy only requirements first to leverage Docker cache
+COPY requirements.txt .
+COPY pyproject.toml poetry.lock ./
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-ENV PATH="/usr/local/bin:${PATH}"
 
+# Set environment variables and create necessary directories
+ENV PATH="/usr/local/bin:${PATH}" \
+    MAGE_AUTH_ENABLED=True
+
+# Create directories with proper permissions
 RUN mkdir -p .file_versions && \
     chmod -R 777 .file_versions
 
-# Set environment variables
-# ENV ENVIRONMENT=dev
-# ENV STREAMS_CHARTS_CLIENT_ID=${STREAMS_CHARTS_CLIENT_ID}
-# ENV STREAMS_CHARTS_TOKEN=${STREAMS_CHARTS_TOKEN}
-# ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-# ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-# ENV AWS_REGION=${AWS_REGION}
+# Copy the rest of the application
+COPY . .
 
 # Expose the port that Mage AI uses
 EXPOSE 6789
 
-# Start the Mage AI server using your existing project
+# Use environment variable for port if provided by Railway
 CMD ["/usr/local/bin/mage", "start", ".", "--host", "0.0.0.0"]
