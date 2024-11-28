@@ -1,28 +1,34 @@
 FROM python:3.12-slim
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Install poetry
+RUN pip install poetry
+
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy dependency files only
 COPY pyproject.toml poetry.lock ./
 
+# Install dependencies using poetry
+# Disable virtualenv creation as we're in a container
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-ENV PATH="/usr/local/bin:${PATH}" 
-
+# Create necessary directories
 RUN mkdir -p .file_versions && \
     chmod -R 777 .file_versions
 
-COPY entrypoint.sh /app/entrypoint.sh 
+# Copy entrypoint script and set permissions
+COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
-    
-COPY . .
 
+# Copy the rest of the application
+COPY . .
 
 EXPOSE 6789
 
